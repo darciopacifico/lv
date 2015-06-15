@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:rich="http://richfaces.org/rich" xmlns:a4j="http://richfaces.org/a4j" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:t="http://myfaces.apache.org/tomahawk" xmlns:c="http://java.sun.com/jstl/core">
+
+<f:view>
+	<h:head>
+		<title>Editor de Layouts</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8" />
+	</h:head>
+
+	<h:body>
+		<h:form>
+
+			<fieldset>
+				<label>Parâmetros para Processamento</label>
+
+				<h:panelGrid columns="3" id="pnlLayout">
+					<h:outputText value="Layout" />
+					<h:selectOneMenu value="#{sampleAppBean.layoutModelVO}" id="cboLayoutModel" converter="layoutModelJSONConverter" >
+						<f:selectItem itemLabel="(selecione)" itemValue="" />
+						<f:selectItems value="#{sampleAppBean.getLayoutModels()}" />
+						<f:validateRequired />
+						
+						<a4j:ajax event="change" render="pnlCampos"  />
+						
+					</h:selectOneMenu>
+					<rich:message for="cboLayoutModel" />
+				</h:panelGrid>
+				
+				<h:panelGrid columns="3" id="pnlCampos" >
+					<h:outputText value="Companhia" />
+					<h:inputText value="#{sampleAppBean.companhia}" id="txtCompanhia" label="Companhia" >
+						<f:validateRequired/>
+					</h:inputText>
+					<rich:message for="txtCompanhia" />
+
+					<h:outputText value="Sucursal" />
+					<h:inputText value="#{sampleAppBean.sucursal}" id="txtSucursal" label="Sucursal">
+						<f:validateRequired/>
+					</h:inputText>
+					<rich:message for="txtSucursal" />
+
+					<h:outputText value="Apolice" />
+					<h:inputText value="#{sampleAppBean.apolice}" id="txtApolice" label="Apólice" >
+						<f:validateRequired/>
+					</h:inputText>
+					<rich:message for="txtApolice" />
+
+					<h:outputText value="Vigência" />
+					<rich:calendar value="#{sampleAppBean.vigencia}" id="calVigencia" >
+						<f:validateRequired/>
+					</rich:calendar>
+					<rich:message for="calVigencia" />
+
+					<h:outputText value="Arquivo" />
+					<h:panelGroup>
+						<a4j:commandLink onclick="#{rich:component('modalUpload')}.show();">
+							<h:outputText value="(" />
+							<h:graphicImage value="/img/upload.png" />
+							<h:outputText value="Upload)" />
+						</a4j:commandLink>
+
+						<h:outputText value="#{sampleAppBean.nomeArquivo}" id="txtArquivo" />
+					</h:panelGroup>
+					<rich:message for="txtArquivo" />
+
+					<h:outputText value="Tamanho" />
+					<h:outputText value="#{sampleAppBean.tamanho}" id="txtTamanho" />
+					<rich:message for="txtTamanho" />
+
+				</h:panelGrid>
+			</fieldset>
+			
+			
+			<a4j:commandButton value="Processar Arquivo" action="#{sampleAppBean.processarArquivo()}" 
+			disabled="#{sampleAppBean.nomeArquivo==null}" id="cmdProcessar"
+			render="pollLots pnlLot"
+			 />
+			<rich:messages globalOnly="true"/>
+		</h:form>
+		
+		<h:form>
+			
+			<a4j:poll interval="2000" render="tbFiles pnlLotes" />
+
+			<h:dataTable value="#{sampleAppBean.files}" var="file" id="tbFiles">
+				<h:column>
+					<f:facet name="header">
+						PK
+					</f:facet>
+					<h:outputText value="#{file.PK}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">
+						Nome
+					</f:facet>
+					<h:outputText value="#{file.fileName}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">
+						Criação
+					</f:facet>
+					<h:outputText value="#{file.dt_criacao}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">
+						Finalização
+					</f:facet>
+					<h:outputText value="#{file.dt_finalizacao}" />
+				</h:column>
+				<h:column>
+					<a4j:commandButton action="#{sampleAppBean.setFileVOProcessing(file)}"  value="Visualizar" render="pnlLot" />
+				</h:column>
+			</h:dataTable>
+			<p/>			
+			<rich:panel id="pnlLotes">
+				<f:facet name="header">Resultados por Lotes</f:facet>
+				
+				<rich:dataGrid value="#{sampleAppBean.fileVOProcessing.lotVOs}" var="lot" columns="18" >
+					<h:panelGroup >
+						<h:outputText value="#{lot.fromLine}-#{lot.toLine} "  title="#{lot.results}"/>
+					</h:panelGroup>				
+				</rich:dataGrid>
+				
+			</rich:panel>
+		</h:form>
+
+
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<!-- ************** MODAL UPLOAD XLSX ****************** -->
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<rich:popupPanel id="modalUpload" height="200" width="500" modal="true" header="Escolha a Planilha Para Processamento">
+			<f:facet name="controls">
+				<h:outputLink value="#" onclick="#{rich:component('modalUpload')}.hide(); return false;">X</h:outputLink>
+			</f:facet>
+			<h:form>
+
+				<h:panelGrid columns="2">
+
+					<h:outputLabel value="Planilha Modelo" for="uploadPlanilha" />
+					<rich:fileUpload id="uploadPlanilha" fileUploadListener="#{sampleAppBean.uploadListener}" acceptedTypes="xlsx, mp4" ontyperejected="alert('Por favor, escolha um arquivo XLSX válido para upload!');" maxFilesQuantity="1" listHeight="1"
+						sizeExceededLabel="Arquivo muito grande! Escolha um arquivo de modelo menor!" serverErrorLabel="Ocorreu um erro em nosso servidor, tente novamente por favor!" addLabel="Adicionar" clearAllLabel="Limpar todas" clearLabel="Limpar" deleteLabel="Apagar"
+						doneLabel="Upload finalizado" uploadLabel="Enviar" oncomplete="#{rich:component('modalUpload')}.hide();" onuploadcomplete="#{rich:component('modalUpload')}.hide();">
+
+						<a4j:ajax event="filesubmit" execute="pnlCampos" />
+						<a4j:ajax event="uploadcomplete" execute="@nothing" render="pnlCampos cmdProcessar"  />
+					</rich:fileUpload>
+
+				</h:panelGrid>
+			</h:form>
+		</rich:popupPanel>
+
+
+	</h:body>
+</f:view>
+</html>

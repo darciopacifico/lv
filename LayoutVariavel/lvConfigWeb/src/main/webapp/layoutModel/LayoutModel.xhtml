@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:rich="http://richfaces.org/rich" xmlns:a4j="http://richfaces.org/a4j" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:t="http://myfaces.apache.org/tomahawk" xmlns:c="http://java.sun.com/jstl/core">
+
+<f:view>
+	<h:head>
+		<title>Editor de Layouts</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8" />
+
+		<script type="text/javascript" src="LayoutModel.js"></script>
+
+		<style>
+		<!--
+		.pnlCriticas{
+			height: 40px;
+			overflow: auto;
+		}
+		-->
+		</style>
+	</h:head>
+
+	<h:body>
+		<script src="../js/bootstrap.js"></script>
+		<h:form>
+
+
+			<rich:toolbar>
+				<a4j:commandButton value="Novo" action="#{layoutJSFBean.novo()}" render="modalUpload modalEdit" oncomplete="#{rich:component('modalEdit')}.show();" />
+				<a4j:commandButton value="Pesquisar" action="#{layoutJSFBean.pesquisar()}" render="tbLayoutModels" execute="pnlFiltro" />
+
+				<a4j:status startText="Processando!..." stopText=""></a4j:status>
+
+			</rich:toolbar>
+
+
+			<!-- *************************************************** -->
+			<!-- *************************************************** -->
+			<!-- ******** TELA PRINCIPAL - BUSTA LAYOUTS *********** -->
+			<!-- *************************************************** -->
+			<!-- *************************************************** -->
+
+			<fieldset>
+				<legend>Filtro</legend>
+				<h:panelGrid columns="2" id="pnlFiltro">
+					<h:outputText value="Nome Layout: " />
+					<h:inputText value="#{layoutJSFBean.nomeLayout}" maxlength="200" size="40" />
+
+					<h:outputText value="Serviço: " />
+					<h:selectOneMenu id="cmbServiceModelPesquisa" value="#{layoutJSFBean.serviceModelPesquisa}" converter="serviceModelJSONConverter">
+						<f:selectItem itemLabel="(Todos)" itemValue="" />
+						<f:selectItems value="#{layoutJSFBean.getServiceModels()}" var="service" itemLabel="service.nome" />
+					</h:selectOneMenu>
+
+				</h:panelGrid>
+			</fieldset>
+
+			<p />
+
+			<rich:dataTable value="#{layoutJSFBean.listModel}" var="model" id="tbLayoutModels" style="width: 800px;">
+
+				<rich:column>
+					<f:facet name="header">ID</f:facet>
+					<h:outputText value="#{model.PK}" />
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">Nome</f:facet>
+					<h:outputText value="#{model.nome}" />
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">Serviço</f:facet>
+					<h:outputText value="#{model.serviceModelVO.nome}" />
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">Arquivo Modelo</f:facet>
+					<h:commandLink action="#{layoutJSFBean.downloadFile(model.arquivo)}" title="MD5sum: #{model.arquivo.checksum}">
+						<h:outputText value="#{model.arquivo.nome}" />
+					</h:commandLink>
+				</rich:column>
+
+				<rich:column>
+					<f:facet name="header">Editar/Excluir</f:facet>
+					<a4j:commandButton value="Editar" action="#{layoutJSFBean.editar(model)}" render="tbLayoutModels modalEdit" oncomplete="#{rich:component('modalEdit')}.show(); return true;"></a4j:commandButton>
+					<a4j:commandButton value="Excluir" action="#{layoutJSFBean.confirmarExclusao(model)}" render="modalExcluir" oncomplete="#{rich:component('modalExcluir')}.show();"></a4j:commandButton>
+				</rich:column>
+
+			</rich:dataTable>
+		</h:form>
+
+
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<!-- ************ TELA EDIÇÃO DE LAYOUTS *************** -->
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<rich:popupPanel modal="true" id="modalEdit" header="Editar Layout" height="600" width="1200">
+			<f:facet name="controls">
+				<h:outputLink value="#" onclick="#{rich:component('modalEdit')}.hide(); return false;">X</h:outputLink>
+			</f:facet>
+
+			<h:form id="fmrEdit">
+				<rich:graphValidator value="#{layoutJSFBean.layoutModelVO}" id="graphCampos">
+					<rich:toolbar>
+						<a4j:commandButton value="Salvar" action="#{layoutJSFBean.salvar()}" execute="fmrEdit" render="pnlMessages tbLayoutModels" />
+					</rich:toolbar>
+
+					<p />
+
+					<h:panelGroup>
+						<fieldset style="height: 80px;">
+							<legend>
+								<h:outputLabel value="Escolha a Planilha Modelo: " for="cmbServiceModel" />
+							</legend>
+
+
+							<h:panelGrid columns="3" width="700">
+
+								<h:outputLabel value="Planilha Modelo: " for="pnlArquivoUpload" />
+								<h:panelGroup id="pnlArquivoUpload">
+									<h:commandLink action="#{layoutJSFBean.downloadFile(layoutJSFBean.layoutModelVO.arquivo)}" title="MD5sum: #{layoutJSFBean.layoutModelVO.arquivo.checksum}">
+										<h:outputText value="#{layoutJSFBean.layoutModelVO.arquivo.nome} &nbsp;" />
+									</h:commandLink>
+									<a4j:commandLink onclick="#{rich:component('modalUpload')}.show();">
+										<h:outputText value="(" />
+										<h:graphicImage value="/img/upload.png" />
+										<h:outputText value="Upload)" />
+									</a4j:commandLink>
+									<h:inputHidden value="#{layoutJSFBean.layoutModelVO.arquivo.nome}" id="hiddenArquivo" />
+								</h:panelGroup>
+								<rich:message for="hiddenArquivo" ajaxRendered="true" />
+
+								<h:outputLabel value="Nome Layout: " for="txtNome" />
+								<h:inputText id="txtNome" value="#{layoutJSFBean.layoutModelVO.nome}" size="40" maxlength="200" disabled="#{layoutJSFBean.layoutModelVO.arquivo.nome==null}" />
+								<rich:message for="txtNome" ajaxRendered="true" />
+
+								<h:outputLabel value="Serviço Destino: " for="cmbServiceModel" />
+								<h:selectOneMenu id="cmbServiceModel" value="#{layoutJSFBean.layoutModelVO.serviceModelVO}" converter="serviceModelJSONConverter" disabled="#{layoutJSFBean.layoutModelVO.arquivo.nome==null}">
+									<f:selectItem itemLabel="(Selecione)" itemValue="" />
+									<f:selectItems value="#{layoutJSFBean.getServiceModels()}" var="service" itemLabel="service.nome" />
+									<a4j:ajax event="valueChange" execute="cmbServiceModel" render="layoutTable pnlUnselected pnlColumnLabels pnlDuplicados pnlCamposServico" />
+								</h:selectOneMenu>
+								<rich:message for="cmbServiceModel" ajaxRendered="true" />
+
+							</h:panelGrid>
+
+						</fieldset>
+					</h:panelGroup>
+					
+					<rich:panel bodyClass="pnlCriticas" >
+						<f:facet name="header">Críticas e Mensagens</f:facet>
+						<rich:messages for="graphCampos" />
+						<rich:messages globalOnly="true" />
+					</rich:panel>
+
+
+
+					<rich:panel id="layoutTable" style="width:1100px; border-style:none; overflow: auto; ">
+
+						<fieldset style="width:99%; border-style:none; overflow: auto; ">
+							<legend>Mapeamento de Colunas e Campos</legend>
+							<div style="width: 1000px; border-style: none;">
+								<table class="table table-striped table-bordered table-condensed" id="tbCampos" cellpadding="0" cellspacing="0" border="1px" style="border-style: solid; border-width: 1px;">
+									<thead>
+										<tr>
+											<ui:repeat value="#{layoutJSFBean.getKeyFields()}" var="field">
+												<th style="text-align: left;">
+													
+													
+													<h:panelGroup id="pnlColumnLabels">
+														<p title="Tipo: #{layoutJSFBean.layoutModelVO.fields[field].dataType}, formato: #{layoutJSFBean.layoutModelVO.fields[field].formatString}">
+															<h:graphicImage width="16" height="16" value="../img/type_date.png" rendered="#{layoutJSFBean.layoutModelVO.fields[field].dataType=='DATE' and !layoutJSFBean.layoutModelVO.fields[field].isDateTime()}"	/>
+															<h:graphicImage width="16" height="16" value="../img/type_dateTime.png" rendered="#{layoutJSFBean.layoutModelVO.fields[field].dataType=='DATE' and layoutJSFBean.layoutModelVO.fields[field].isDateTime()}" 	/>
+															<h:graphicImage width="16" height="16" value="../img/type_number.jpg" 	 rendered="#{layoutJSFBean.layoutModelVO.fields[field].dataType=='NUMBER'}"	/>
+															<h:graphicImage width="16" height="16" value="../img/type_text.png" 		 rendered="#{layoutJSFBean.layoutModelVO.fields[field].dataType=='SSTINDEX'}"	/>
+															
+															<h:outputText value=" #{layoutJSFBean.layoutModelVO.fields[field].nome}" style="color: green;" rendered="#{!layoutJSFBean.layoutModelVO.fields[field].duplicated}" />
+															<h:outputText value=" #{layoutJSFBean.layoutModelVO.fields[field].nome}" style="color: red;" rendered="#{layoutJSFBean.layoutModelVO.fields[field].duplicated}" />
+															<h:graphicImage value="../img/warning.png" style="width: 12px; height: 12px; " rendered="#{layoutJSFBean.layoutModelVO.fields[field].duplicated}" title="O campo '#{layoutJSFBean.layoutModelVO.fields[field].serviceFieldVO.name}' foi mapeado para mais de uma coluna da planilha!" />
+														</p>
+													</h:panelGroup>
+													
+													<h:selectOneMenu id="serviceFieldCmb" style="width:130px;" value="#{layoutJSFBean.layoutModelVO.fields[field].serviceFieldVO}" var="sm" converter="serviceFieldJSONConverter" >
+														<f:selectItem itemLabel="------" itemValue="" />
+														<f:selectItems value="#{layoutJSFBean.getServiceFields()}" var="sm" noSelectionValue="true" />
+														<a4j:ajax event="valueChange" execute="@this" render="pnlColumnLabels pnlDuplicados pnlCamposServico txtFormato"/>
+													</h:selectOneMenu>
+
+														<rich:inplaceInput id="txtFormato"
+														defaultLabel="Formato Destino"
+														style="width:120px; display:#{(layoutJSFBean.layoutModelVO.fields[field].isFormacaoObrigatoria())?'block':'none'};"
+														value="#{layoutJSFBean.layoutModelVO.fields[field].formatoDestino}"
+														>
+															<a4j:ajax event="change" render="layoutTable"  />
+														</rich:inplaceInput>
+														
+												</th>
+											</ui:repeat>
+										</tr>
+									</thead>
+										
+									<tbody >
+									
+											<ui:repeat value="#{layoutJSFBean.layoutModelVO.values}" var="mapVal" >
+												<tr >
+													<ui:repeat value="#{layoutJSFBean.fieldKeys(mapVal)}" var="key">
+														<h:panelGroup id="pnlCorpoTabela">
+
+														<td style="border-color: black; border-width: 1px;" nowrap="nowrap">
+
+															<h:outputText value="#{layoutJSFBean.layoutModelVO.fields.get(mapVal.get(key).coluna).getFormatedVal(mapVal.get(key).valRaw,mapVal.get(key).val)}"  />
+															
+															
+														</td>
+														</h:panelGroup>
+
+													</ui:repeat>
+												</tr>
+											</ui:repeat>
+									</tbody>
+								</table>
+							</div>
+						</fieldset>
+					</rich:panel>
+
+				</rich:graphValidator>
+			</h:form>
+		</rich:popupPanel>
+
+
+
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<!-- ************** MODAL UPLOAD XLSX ****************** -->
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<rich:popupPanel id="modalUpload" height="200" width="500" modal="true" header="Escolha a Planilha Modelo">
+			<f:facet name="controls">
+				<h:outputLink value="#" onclick="#{rich:component('modalUpload')}.hide(); return false;">X</h:outputLink>
+			</f:facet>
+			<h:form>
+
+				<h:panelGrid columns="2">
+
+					<h:outputLabel value="Linhas de Exemplo" for="ctrlQtdLinhas" />
+					<h:inputText id="ctrlQtdLinhas" value="#{layoutJSFBean.layoutModelVO.arquivo.linhasExemplo}" max="200" min="3" size="1" />
+
+					<h:outputLabel value="Planilha Modelo" for="uploadPlanilha" />
+					<rich:fileUpload id="uploadPlanilha" fileUploadListener="#{layoutJSFBean.uploadListener}" acceptedTypes="xlsx, mp4" 
+					ontyperejected="alert('Por favor, escolha um arquivo XLSX válido para upload!');" maxFilesQuantity="1" listHeight="1"
+					
+					sizeExceededLabel="Arquivo muito grande! Escolha um arquivo de modelo menor (max 3Mb)!" 
+          serverErrorLabel="Ocorreu um erro em nosso servidor, tente novamente por favor!"
+					
+					addLabel="Adicionar"
+					clearAllLabel="Limpar todas"
+					clearLabel="Limpar"
+					deleteLabel="Apagar"
+					doneLabel="Upload finalizado"
+					uploadLabel="Enviar"
+					
+					oncomplete="#{rich:component('modalUpload')}.hide();"
+					>
+
+						<a4j:ajax event="filesubmit" execute="fmrEdit" />
+						<a4j:ajax event="uploadcomplete" execute="@nothing" render="fmrEdit"  />
+					</rich:fileUpload>
+
+				</h:panelGrid>
+			</h:form>
+		</rich:popupPanel>
+
+
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<!-- ********** MODAL CONFIRMA EXCLUSÃO **************** -->
+		<!-- *************************************************** -->
+		<!-- *************************************************** -->
+		<rich:popupPanel modal="true" id="modalExcluir" header="Excluir Registro?">
+			<h:form>
+				<f:facet name="controls">
+					<h:outputLink value="#" onclick="#{rich:component('modalExcluir')}.hide(); return false;">X</h:outputLink>
+				</f:facet>
+
+				<h:outputText value=" Confirma a exclusão do registro?" />
+
+				<h:panelGrid columns="2">
+
+					<h:outputLabel value="Nome Layout: " for="txtNome" />
+					<h:outputText id="txtNome" value="#{layoutJSFBean.layoutModelVO.nome}" />
+
+					<h:outputLabel value="Serviço Destino: " for="cmbServiceModel" />
+					<h:outputText value="#{layoutJSFBean.layoutModelVO.serviceModelVO.nome}" />
+
+					<a4j:commandButton value="Sim" action="#{layoutJSFBean.excluir()}" render="tbLayoutModels" onbegin="#{rich:component('modalExcluir')}.hide();" />
+					<a4j:commandButton value="São" onclick="#{rich:component('modalExcluir')}.hide();" />
+				</h:panelGrid>
+
+			</h:form>
+		</rich:popupPanel>
+
+	</h:body>
+</f:view>
+</html>

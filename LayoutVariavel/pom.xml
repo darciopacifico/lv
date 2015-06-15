@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>mapfrelv</groupId>
+	<artifactId>mapfrelv-pom</artifactId>
+	<version>1.0</version>
+	<packaging>pom</packaging>
+	<name>POM - MAPFRE Layout Variavel</name>
+
+	<modules>
+		<module>lvJobManager</module>
+		<module>lvConfigWeb</module>
+		<module>lvConfigCore</module>
+		<module>lvTestApp</module>
+	</modules>
+
+</project>

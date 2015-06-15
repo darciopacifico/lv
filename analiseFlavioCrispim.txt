@@ -1,0 +1,93 @@
+* Problemas
+** Erro processamento de arquivo
+*** Arquivos contendo caracteres especiais causam erros
+*** Arquivos XLSX com muitos registros tem processamento lento
+** Erro processamento de Movimentação
+** Correção de um erro, ocasiona erro em outro módulo
+** Carga funciona para um módulo e não para outro (Ex. Prestamista vs VIDA-VIDA)
+** Dificuldade em acompanhar a execução
+** Tempo de resposta aos atendimentos de incidente
+** Performance
+
+========================================================================================================================================
+* Erro processamento de arquivo
+Arquivos contendo caracteres especiais causam erros
+
+	Problema: Ao carregar arquivos Excel onde o conteúde de uma célula contém caracteres especiais, causa erro na carga, abortando o processo inteiro.
+	Exemplo: Se o conteúdo for: "Fulano\", ou "Fula"no"
+
+	Solução: Revisitar a geração de arquivo CSV para caracteres especiais. Uso de testes unitários para casos onde campo possui caracteres como: \ \n e "
+	
+*** Arquivos XLSX com muitos registros tem processamento lento
+
+	Problema: Arquivos XLXS (excel) com muitos registros a leitura do arquivo é demorada.
+	Exemplo: Excel 50.000 registros.
+	
+	Solução: Restruturação da leitura de arquivos do excel (XLS, XLSX) em arquivo CSV. Com uso de testes unitários para validar os diferentes tipos de dados que existem no Excel (XLSX)
+========================================================================================================================================
+Erro processamento da Carga
+* Carga ocorre mas registro não aparece
+
+	Problemas:
+	* Ocorrem disversos tipos de erro durante a carga (ou cotação), dentre as causas comuns são: campo necessário para processamento não informado no arquivo.
+	
+========================================================================================================================================
+Erro processamento de Movimentação
+* Carga ocorre mas registro não aparece
+
+	Problemas:
+	* Ocorrem disversos tipos de erro durante a movimentação (ou cotação), dentre as causas comuns são: campo necessário para processamento não informado no arquivo.
+
+
+========================================================================================================================================
+Pontos fracos atuais: código misturado, com dependência cíclica e contendo muitos desvios de fluxo para Prestamista, Cotizador e Vida-Vida.
+Código monolítico: impossível de testar unitariamente; Falta de visibilidade dos processos envolvidos.
+Extensível: dificuldade de extensão, Recorrência de quebras nos módulos devido a correções.
+Contrato: muito extenso, a interface é muito ampla e atualmente o LV atua de modo diferente dependendo do tipo do produto (VIDA-VIDA, COTIZADOR e PRESTAMISTA);
+Reutilização: difícil, pelo fato de que cada módulo, tem suas necessidades específicas, sempre demanda alterações
+na carga do LV, seja para adicionar novos tipos de validação, ou até para suprimir validações que existem para outros módulos.
+========================================================================================================================================
+* Conversão de tipos de arquivo
+Restruturação da leitura de arquivos do excel (XLS, XLSX) em arquivo CSV.
+Revisitar a geração de arquivo CSV para caracteres especiais. Uso de testes unitários para casos onde campo possui caracteres como: \ \n e "
+========================================================================================================================================
+* Configuração de layout:
+Remodelagem da composição para que esta já possua o tipo de capital, com o tipo de capital será possível validar os campos mínimos obrigatórios para o tipo de capital utilizado. Ao criar uma nova configuração, o usuário escolhe o tipo de capital e os campos obrigatórios para os tipos de carga serão selecionados como obrigatórios automaticamente.
+
+Um sub-componente será criado para fazer a intercafe de configuração do LV, de forma que para se criar uma composição, será usado como ponto de partida o tipo de capital. Como resultado criado uma composição já contendo os campos mínimos exigidos pelo tipo de capital. Será também responsabilidade deste subcomponente exibir críticas quando o layout não possuir um campo que é obrigatório. 
+
+Exemplo:
+Tipo de Capital: Escalonado (salário)
+Layout: deve existir no layout o campo salário
+Composição: 
+* Estudo: 
+** campo "salário" será marcado como obrigatório compulsóriamente
+* Movimentação:
+** campo "salário" será marcado como obrigatório compulsóriamente
+** campos "nome", "sexo", "data nasc." serão marcados como obrigatório compulsóriamente
+
+Resultado: Os campos necessários para os diferentes tipos de capital, serão marcados como obrigatório automaticamente na tela de configuração para o usuário; Simplificando o ato de configurar uma carga válida e fazendo independente de produto;
+
+<Modelo de dados>
+<Diagrama de componente>
+<Diagrama de package>
+
+========================================================================================================================================
+* Processo de Carga
+
+
+Double-check: Validação Pipeline
+* Para que o processo seguinte ao LV seja capaz de executar com sucesso, o arquivo entra para carga no LV deve possuir o mínimo de informações que são esperados pelo batch de negócio. (Ex. Prestamista, VIDA-VIDA). Esta validação usará o tipo de movimentação e o tipo de capital e atuará checando tanto o layout quanto a composição.
+
+Exemplo:
+Tipo de Capital: Prestamista
+Layout: deve existir no layout os campos: "Nome", "Data Nasc.", "Inicio Vigencia", "Fim Vigencia", etc.
+Em caso de inconsistência, serão informados todos os campos que são obrigatórios que faltam na Ocorrência de processo.
+
+Pipeline: Os batches serão dispostos em grupos.
+* para cada produto que possui batch especial, este terá um "grupo de batch" onde o primeiro batch na sequência de execução do grupo será o batch do LV. Promovendo a separação a responsabilidades entre os processos;
+Resultado: O LV não teria mais especifidades para cada produto, quando criado. Promovendo uma melhor reaproveitamento de código.
+
+<Modelo de dados>
+<Diagrama de componente>
+<Diagrama de package>

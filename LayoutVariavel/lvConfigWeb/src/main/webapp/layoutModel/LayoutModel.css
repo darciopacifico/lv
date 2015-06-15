@@ -1,0 +1,71 @@
+
+
+.gridCampos{
+	border: none;
+	
+}
+
+.gridFields .ui-datagrid-column {
+	border-spacing: 0px;
+	padding: 0px;
+	width: 50px;
+	border: 1px;
+	border-color: black;
+	border-style: hidden;
+}
+
+.fieldStatusRed,.fieldStatusGreen {
+	font-size: 9px;
+}
+
+.fieldStatusRed {
+	color: red;
+}
+
+.fieldStatusGreen {
+	color: green;
+}
+
+.ui-selectonemenu-items-wrapper {
+	height: 400px;
+}
+
+.element.style {
+	height: 400px;
+}
+
+#tbCampos td {
+	font-size: 10px;
+	padding: 0px;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+
+caption {
+	text-align: left;
+}
+
+.itemMenu:hover {
+	cursor: pointer;
+	color: blue;
+	border-width: 1px;
+	border-style: solid;
+	border-color: blue;
+}
+
+.itemMenu {
+	cursor: pointer;
+	color: blue;
+	border-width: 1px;
+	border-style: red;
+	border-color: blue;
+}
+
+.itemMenu:hover span {
+	cursor: pointer;
+	color: blue;
+}
+
+.ui-layout-pane {
+	border-style: none;
+}
